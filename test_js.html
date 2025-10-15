@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript测试</title>
+</head>
+<body>
+    <h1>JavaScript测试页面</h1>
+    
+    <form id="testForm">
+        <input type="text" id="testInput" placeholder="输入测试内容">
+        <button type="submit">提交测试</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        console.log('JavaScript加载完成');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM加载完成');
+            
+            const form = document.getElementById('testForm');
+            console.log('表单元素:', form);
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('表单提交事件触发');
+                
+                const input = document.getElementById('testInput');
+                const result = document.getElementById('result');
+                
+                result.innerHTML = '表单提交成功！输入内容：' + input.value;
+            });
+        });
+    </script>
+</body>
+</html>
+

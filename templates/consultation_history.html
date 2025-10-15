@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的咨询记录 - 患者中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .nav-btn {
+            padding: 12px 24px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid #667eea;
+        }
+        
+        .nav-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .consultation-list {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .consultation-item {
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .consultation-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .consultation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .consultation-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .consultation-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-in-progress {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-completed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .consultation-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .consultation-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .consultation-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .empty-state p {
+            margin-bottom: 30px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #e1e5e9;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .page-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .page-btn:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .consultation-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .consultation-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .consultation-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 我的咨询记录</h1>
+            <p>查看您的所有医疗咨询历史和医生反馈</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="/consultation" class="nav-btn">新建咨询</a>
+            <a href="/consultation/history" class="nav-btn active">咨询记录</a>
+            <a href="/profile" class="nav-btn">个人中心</a>
+        </div>
+        
+        <div class="consultation-list">
+            <div id="loading" class="loading">
+                正在加载咨询记录...
+            </div>
+            
+            <div id="consultation-content" style="display: none;">
+                <!-- 咨询记录列表将在这里动态加载 -->
+            </div>
+            
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <h3>暂无咨询记录</h3>
+                <p>您还没有提交过任何医疗咨询</p>
+                <a href="/consultation" class="btn btn-primary">立即咨询</a>
+            </div>
+            
+            <div id="error-message" class="error" style="display: none;">
+                <!-- 错误信息将在这里显示 -->
+            </div>
+            
+            <div id="pagination" class="pagination" style="display: none;">
+                <!-- 分页按钮将在这里显示 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentPage = 1;
+        const pageSize = 10;
+        let totalPages = 1;
+        
+        // 页面加载时获取咨询记录
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConsultations();
+        });
+        
+        // 加载咨询记录
+        async function loadConsultations(page = 1) {
+            try {
+                showLoading();
+                
+                const response = await fetch(`/api/consultation/user/list?skip=${(page - 1) * pageSize}&limit=${pageSize}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const consultations = await response.json();
+                
+                if (consultations.length === 0 && page === 1) {
+                    showEmptyState();
+                } else {
+                    renderConsultations(consultations);
+                    currentPage = page;
+                    // 这里可以添加分页逻辑
+                }
+                
+            } catch (error) {
+                console.error('加载咨询记录失败:', error);
+                showError('加载咨询记录失败: ' + error.message);
+            }
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('consultation-content').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        // 显示空状态
+        function showEmptyState() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('consultation-content').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('consultation-content').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+        
+        // 渲染咨询记录列表
+        function renderConsultations(consultations) {
+            const container = document.getElementById('consultation-content');
+            container.innerHTML = '';
+            
+            consultations.forEach(consultation => {
+                const item = createConsultationItem(consultation);
+                container.appendChild(item);
+            });
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('consultation-content').style.display = 'block';
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        // 创建咨询记录项
+        function createConsultationItem(consultation) {
+            const item = document.createElement('div');
+            item.className = 'consultation-item';
+            item.onclick = () => viewConsultationDetail(consultation.id);
+            
+            const statusClass = `status-${consultation.status}`;
+            const statusText = getStatusText(consultation.status);
+            const modeText = consultation.mode === 'realtime' ? '实时咨询' : '一次性咨询';
+            const doctorLevelText = consultation.doctor_level ? getDoctorLevelText(consultation.doctor_level) : '未分配';
+            
+            item.innerHTML = `
+                <div class="consultation-header">
+                    <div class="consultation-title">${modeText} - ${doctorLevelText}</div>
+                    <div class="consultation-status ${statusClass}">${statusText}</div>
+                </div>
+                
+                <div class="consultation-info">
+                    <div class="info-item">
+                        <div class="info-label">咨询时间</div>
+                        <div class="info-value">${formatDate(consultation.created_at)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">费用</div>
+                        <div class="info-value">${consultation.price_usdt} USDT</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">医生</div>
+                        <div class="info-value">${consultation.assigned_doctor_id ? '已分配' : '待分配'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">完成时间</div>
+                        <div class="info-value">${consultation.completed_at ? formatDate(consultation.completed_at) : '未完成'}</div>
+                    </div>
+                </div>
+                
+                <div class="consultation-description">
+                    ${consultation.disease_description}
+                </div>
+                
+                <div class="consultation-actions">
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); viewConsultationDetail('${consultation.id}')">
+                        查看详情
+                    </button>
+                    ${consultation.status === 'completed' ? `
+                        <button class="btn btn-success" onclick="event.stopPropagation(); downloadReport('${consultation.id}')">
+                            下载报告
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            
+            return item;
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待支付',
+                'paid': '已支付',
+                'in_progress': '进行中',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // 获取医生等级文本
+        function getDoctorLevelText(level) {
+            const levelMap = {
+                'normal': '普通医生',
+                'senior': '高级医生',
+                'expert': '专家医生'
+            };
+            return levelMap[level] || level;
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // 查看咨询详情
+        function viewConsultationDetail(consultationId) {
+            window.location.href = `/consultation/detail/${consultationId}`;
+        }
+        
+        // 下载报告
+        async function downloadReport(consultationId) {
+            try {
+                const response = await fetch(`/api/consultation/${consultationId}/report`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const reportData = await response.json();
+                
+                // 创建下载链接
+                const dataStr = JSON.stringify(reportData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `consultation_report_${consultationId}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showSuccess('报告下载成功！');
+                
+            } catch (error) {
+                console.error('下载报告失败:', error);
+                showError('下载报告失败: ' + error.message);
+            }
+        }
+        
+        // 显示成功信息
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            document.querySelector('.container').insertBefore(successDiv, document.querySelector('.container').firstChild);
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.container').firstChild);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+        
+        // 刷新列表
+        function refreshList() {
+            loadConsultations(currentPage);
+        }
+    </script>
+</body>
+</html>

@@ -31,27 +31,44 @@ class UserService:
     
     def create_user(self, user_data: UserCreate) -> UserInDB:
         """创建新用户"""
-        # 检查用户是否已存在
-        existing_user = self.get_user_by_google_id(user_data.google_id)
-        if existing_user:
-            # 更新最后登录时间
-            return self.update_user_login(existing_user.id)
-        
-        # 创建新用户
-        user_dict = user_data.dict()
-        user_dict.update({
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "last_login": datetime.utcnow(),
-            "login_count": 1,
-            "is_active": True
-        })
-        
-        # 插入数据库
-        self.dao.insert(self.COLLECTION_NAME, user_dict)
-        
-        # 返回创建的用户
-        return self.get_user_by_google_id(user_data.google_id)
+        try:
+            # 检查用户是否已存在
+            existing_user = self.get_user_by_google_id(user_data.google_id)
+            if existing_user:
+                # 更新最后登录时间
+                print(f"用户已存在，更新登录信息: {existing_user.id}")
+                updated_user = self.update_user_login(str(existing_user.id))
+                if updated_user:
+                    return updated_user
+                else:
+                    print("更新用户登录信息失败，返回原用户信息")
+                    return existing_user
+            
+            # 创建新用户
+            user_dict = user_data.dict()
+            user_dict.update({
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "last_login": datetime.utcnow(),
+                "login_count": 1,
+                "is_active": True
+            })
+            
+            # 插入数据库
+            self.dao.insert(self.COLLECTION_NAME, user_dict)
+            print(f"新用户创建成功: {user_data.email}")
+            
+            # 返回创建的用户
+            new_user = self.get_user_by_google_id(user_data.google_id)
+            if new_user:
+                return new_user
+            else:
+                print("创建用户后无法获取用户信息")
+                return None
+                
+        except Exception as e:
+            print(f"创建用户时出错: {e}")
+            return None
     
     def get_user_by_google_id(self, google_id: str) -> Optional[UserInDB]:
         """根据Google ID获取用户"""
@@ -65,13 +82,17 @@ class UserService:
     def get_user_by_id(self, user_id: str) -> Optional[UserInDB]:
         """根据用户ID获取用户"""
         try:
-            users = self.dao.search(self.COLLECTION_NAME, "_id", ObjectId(user_id))
+            # 确保user_id是有效的ObjectId
+            if isinstance(user_id, str):
+                user_id = ObjectId(user_id)
+            
+            users = self.dao.search(self.COLLECTION_NAME, "_id", user_id)
             if users:
                 user_data = users[0]
                 user_data["id"] = user_data.pop("_id")
                 return UserInDB(**user_data)
         except Exception as e:
-            print(f"获取用户时出错: {e}")
+            print(f"获取用户时出错: {e}, user_id: {user_id}")
         return None
     
     def get_user_by_email(self, email: str) -> Optional[UserInDB]:
@@ -87,7 +108,7 @@ class UserService:
         """更新用户登录信息"""
         try:
             # 使用MongoDB的$inc操作符增加登录次数
-            result = self.dao.__db[self.COLLECTION_NAME].update_one(
+            result = self.dao._MongoDao__db[self.COLLECTION_NAME].update_one(
                 {"_id": ObjectId(user_id)}, 
                 {
                     "$set": {"last_login": datetime.utcnow(), "updated_at": datetime.utcnow()}, 
@@ -97,6 +118,8 @@ class UserService:
             
             if result.modified_count > 0:
                 return self.get_user_by_id(user_id)
+            else:
+                print(f"更新用户登录信息失败，用户ID: {user_id}")
         except Exception as e:
             print(f"更新用户登录信息时出错: {e}")
         return None
@@ -137,7 +160,7 @@ class UserService:
     def get_all_users(self, skip: int = 0, limit: int = 100) -> List[UserInDB]:
         """获取所有用户（分页）"""
         try:
-            users = self.dao.__db[self.COLLECTION_NAME].find({}).skip(skip).limit(limit)
+            users = self.dao._MongoDao__db[self.COLLECTION_NAME].find({}).skip(skip).limit(limit)
             result = []
             for user in users:
                 user["id"] = user.pop("_id")
@@ -150,7 +173,7 @@ class UserService:
     def search_users(self, query: dict, skip: int = 0, limit: int = 100) -> List[UserInDB]:
         """搜索用户"""
         try:
-            users = self.dao.__db[self.COLLECTION_NAME].find(query).skip(skip).limit(limit)
+            users = self.dao._MongoDao__db[self.COLLECTION_NAME].find(query).skip(skip).limit(limit)
             result = []
             for user in users:
                 user["id"] = user.pop("_id")
@@ -163,13 +186,13 @@ class UserService:
     def get_user_stats(self) -> dict:
         """获取用户统计信息"""
         try:
-            total_users = self.dao.__db[self.COLLECTION_NAME].count_documents({})
-            active_users = self.dao.__db[self.COLLECTION_NAME].count_documents({"is_active": True})
+            total_users = self.dao._MongoDao__db[self.COLLECTION_NAME].count_documents({})
+            active_users = self.dao._MongoDao__db[self.COLLECTION_NAME].count_documents({"is_active": True})
             
             # 获取最近7天注册的用户数
             from datetime import timedelta
             seven_days_ago = datetime.utcnow() - timedelta(days=7)
-            recent_users = self.dao.__db[self.COLLECTION_NAME].count_documents({
+            recent_users = self.dao._MongoDao__db[self.COLLECTION_NAME].count_documents({
                 "created_at": {"$gte": seven_days_ago}
             })
             

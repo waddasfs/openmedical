@@ -16,9 +16,15 @@ class MongoDao:
         insert log data into mongo
         :param collection_name:
         :param parm:
-        :return:
+        :return: InsertOneResult object
         """
-        self.__db[collection_name].insert_one(parm)
+        try:
+            result = self.__db[collection_name].insert_one(parm)
+            print(f"数据插入成功，集合: {collection_name}, 插入ID: {result.inserted_id}")
+            return result
+        except Exception as e:
+            print(f"数据插入失败，集合: {collection_name}, 错误: {e}")
+            return None
 
     def batch_search(self, collection_name, key, values):
         query_in = {key: {"$in": values}}
@@ -82,8 +88,19 @@ class MongoDao:
         :param keyword:
         :return: index name
         """
-        index_name = self.__db[collection_name].ensure_index(keyword, ASCENDING)
-        return index_name
+        try:
+            # 检查索引是否已存在
+            existing_indexes = self.__db[collection_name].list_indexes()
+            for index in existing_indexes:
+                if keyword in index.get('key', {}):
+                    return f"{keyword}_1"  # 索引已存在
+            
+            # 创建新索引
+            index_name = self.__db[collection_name].create_index([(keyword, ASCENDING)])
+            return index_name
+        except Exception as e:
+            print(f"创建索引失败: {e}")
+            return None
 
     def check_index(self, collection_name):
         """
